@@ -153,8 +153,8 @@ function build() {
   seed = 17;
   words = [];
 
-  const W = canvas.width;
-  const H = canvas.height;
+  const W = lastWidth;
+  const H = lastWidth;
   const scale = Math.min(W / 800, H / 800);
   const cx = W / 2;
   const heartY = H * 0.405;
