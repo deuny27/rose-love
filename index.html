@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#060208">
+<title>1 Rose, Every Language</title>
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: #060208;
+  color: #ff1744;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+header {
+  text-align: center;
+  padding: 30px 8px 0;
+  z-index: 1;
+}
+
+h1 {
+  font-size: clamp(23px, 6vw, 38px);
+  margin: 0;
+  font-weight: bold;
+}
+
+.subtitle {
+  color: #a91b48;
+  font: bold 10px Arial, sans-serif;
+  letter-spacing: 2px;
+  margin-top: 12px;
+}
+
+main {
+  width: 100%;
+  max-width: 800px;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 105px);
+  object-fit: contain;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>1 Rose, Every Language</h1>
+  <div class="subtitle">LOVE HAS NO LANGUAGE</div>
+</header>
+
+<main>
+  <canvas id="rose" aria-label="Una rosa formada por palabras de amor"></canvas>
+</main>
+
+<script>
+const canvas = document.getElementById("rose");
+const ctx = canvas.getContext("2d");
+
+const BG = "#060208";
+const RED = [
+ "#ff1744","#ff2255","#ff3366","#ff456e",
+ "#ff527c","#ff6688","#ff7895","#ff8ba3",
+ "#e91e63","#ff003c","#ff4d79"
+];
+const GREEN = [
+ "#9be564","#8bd450","#a5e887","#b7f28b",
+ "#d0ff9c","#75c94a","#c5e99b","#80d080"
+];
+
+const PHRASES = [
+ "I LOVE YOU","I love you","Te amo","Ti amo",
+ "Je t'aime","Ich liebe dich","Eu te amo",
+ "Seni seviyorum","Я тебя люблю","愛してる",
+ "大好き","사랑해","사랑합니다","我爱你","我愛你",
+ "أحبك","أحبكِ","मैं तुमसे प्यार करता हूँ",
+ "मैं तुमसे प्यार करती हूँ","আমি তোমাকে ভালোবাসি",
+ "Mahal kita","Aku cinta kamu","Saya cinta kamu",
+ "Nakupenda","Ngiyakuthanda","Ndinokuthanda",
+ "Ndagukunda","A hụrụ m gị n'anya","Mo nifẹ rẹ",
+ "Mi amas vin","Volim te","Ljubim te","Miluji tě",
+ "Ľúbim ťa","Kocham cię","Szeretlek","Te iubesc",
+ "Обичам те","Кохаю тебе","Я цябе кахаю",
+ "Ik hou van jou","Jeg elsker deg","Jeg elsker dig",
+ "Jag älskar dig","Rakastan sinua","Ég elska þig",
+ "T'estimo","Quérote","Aishiteru",
+ "Aroha ahau ki a koe","Ua here vau ia oe",
+ "Ani ohev otach","Ani ohevet otcha",
+ "Maite zaitut","Ti tengu caru","Te sakam",
+ "S'agapo","Ya tebya lyublyu","Amo-te","Te quiero",
+ "Love","AMOR","AMOUR","LOVE","LIEBE","AMORE"
+];
+
+const STEM = [
+ "LOVE","AMOR","Ti amo","LOVE","愛してる",
+ "사랑해","AMOUR","I LOVE YOU","AMORE",
+ "我爱你","Mahal kita","LOVE","AMOR","Te amo"
+];
+
+let seed = 17;
+function rand() {
+  seed = (seed * 16807) % 2147483647;
+  return (seed - 1) / 2147483646;
+}
+function pick(a) {
+  return a[Math.floor(rand() * a.length)];
+}
+function between(a, b) {
+  return a + rand() * (b - a);
+}
+
+function insideHeart(x, y) {
+  const a = x*x + y*y - 1;
+  return a*a*a - x*x*y*y*y <= 0;
+}
+
+function heartPoints(count) {
+  const points = [];
+  while (points.length < count) {
+    const x = between(-1.45, 1.45);
+    const y = between(-1.35, 1.35);
+    if (insideHeart(x, y)) points.push([x, y]);
+  }
+  return points;
+}
+
+let words = [];
+let start = performance.now();
+let lastWidth = 0;
+
+function build() {
+  seed = 17;
+  words = [];
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const scale = Math.min(W / 800, H / 800);
+  const cx = W / 2;
+  const heartY = H * 0.405;
+  const heartScaleX = 205 * scale;
+  const heartScaleY = 195 * scale;
+
+  for (const [nx, ny] of heartPoints(650)) {
+    const r = rand();
+    const size = (r < .17 ? between(5, 7) :
+                  r < .71 ? between(7, 9) :
+                  between(9, 11)) * scale;
+
+    words.push({
+      x: cx + nx * heartScaleX,
+      y: heartY - ny * heartScaleY,
+      phrase: pick(PHRASES),
+      color: pick(RED),
+      size: Math.max(3.2, size),
+      delay: between(0, 3),
+      green: false
+    });
+  }
+
+  for (let i = 0; i < 27; i++) {
+    words.push({
+      x: cx + Math.sin(i * .20) * 9 * scale,
+      y: H * .65625 + i * 8 * scale,
+      phrase: pick(STEM),
+      color: pick(GREEN),
+      size: Math.max(3.2, pick([6,7,8,9]) * scale),
+      delay: between(0, 3),
+      green: true
+    });
+  }
+
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 18; i++) {
+      words.push({
+        x: cx + side * (20 + i * 5) * scale,
+        y: H * .7125 + i * 5 * scale,
+        phrase: pick(STEM),
+        color: pick(GREEN),
+        size: Math.max(3.2, pick([6,7,8]) * scale),
+        delay: between(0, 3),
+        green: true
+      });
+    }
+  }
+
+  start = performance.now();
+}
+
+function resize() {
+  const width = Math.min(window.innerWidth, 800);
+  const height = width;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  lastWidth = width;
+  build();
+}
+
+function draw(now) {
+  const W = lastWidth;
+  const H = W;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, H);
+
+  const scale = W / 800;
+  const cx = W / 2;
+  const heartY = H * .4125;
+  const elapsed = (now - start) / 1000;
+
+  for (const word of words) {
+    const p = Math.max(0, Math.min(1, (elapsed - word.delay) / 3));
+    const x = cx + (word.x - cx) * p;
+    const y = heartY + (word.y - heartY) * p;
+
+    ctx.globalAlpha = .18 + .82 * p;
+    ctx.fillStyle = word.color;
+    ctx.font = `bold ${word.size}px Georgia, serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(word.phrase, x, y);
+  }
+
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(draw);
+}
+
+window.addEventListener("resize", resize);
+resize();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
